@@ -1,0 +1,20 @@
+# ──────────────────────────────────────────────────────────────────
+# requirements.txt
+# Proyecto: Consultor de Continuidad Narrativa — Transformers RAG
+# Curso: ISY0101 - Ingeniería de Soluciones con IA (Duoc UC)
+# ──────────────────────────────────────────────────────────────────
+
+# API de OpenAI (para embeddings y generación GPT-4o)
+openai>=1.30.0
+
+# LangChain — framework de agentes y cadenas LLM
+langchain>=0.2.0
+langchain-openai>=0.1.8
+langchain-community>=0.2.0
+
+# Vectores y búsqueda semántica
+faiss-cpu>=1.8.0          # Vector store con FAISS (CPU)
+numpy>=1.26.0             # Operaciones vectoriales (también usado como fallback sin FAISS)
+
+# Utilidades
+python-dotenv>=1.0.0      # Carga variables de entorno desde .env

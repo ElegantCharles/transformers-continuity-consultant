@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.env
+gen_arch.py
+generate_diagram.py
+arquitectura.png
