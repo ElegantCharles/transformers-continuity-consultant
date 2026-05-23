@@ -2,7 +2,7 @@
 
 > **Sistema RAG + Agente Deliberativo con Memoria y Planificacion Multi-Etapa**  
 > Curso ISY0101 — Ingenieria de Soluciones con Inteligencia Artificial  
-> Duoc UC · Profesor Roberto Eduardo Vega Araneda · Evaluacion Parcial N°2
+> Duoc UC · Profesor Roberto Eduardo Vega Araneda :D · Evaluacion Parcial N°2
 
 ---
 
