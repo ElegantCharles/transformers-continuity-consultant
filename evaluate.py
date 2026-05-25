@@ -1,6 +1,7 @@
-import time
 from dataclasses import dataclass
 
+# FIX #7: Se eliminó `import time` que estaba importado pero nunca se usaba en este módulo.
+# El tiempo de procesamiento se calcula dentro de ContinuityConsultant.analyze() en transformers_rag.py.
 from transformers_rag import ContinuityConsultant, ContinuityReport
 
 
@@ -124,7 +125,7 @@ def run_evaluation(consultant):
             "time_ms": report.processing_time_ms,
             "expected_issue": tc.expected_issue,
         })
-        status = "OK" if correct else "FAIL"
+        status = "✓ OK" if correct else "✗ FAIL"
         print(f"  esperado={tc.expected_verdict} | obtenido={report.verdict} -> {status}")
     return results
 
@@ -136,13 +137,17 @@ def compute_metrics(results):
     tn = sum(1 for r in results if normalize(r["expected"]) != "INCONSISTENTE" and normalize(r["obtained"]) != "INCONSISTENTE")
 
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
-    accuracy = sum(r["correct"] for r in results) / len(results)
+    recall    = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    f1        = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+    accuracy  = sum(r["correct"] for r in results) / len(results)
 
     return {
-        "total": len(results), "correct": sum(r["correct"] for r in results),
-        "accuracy": accuracy, "precision": precision, "recall": recall, "f1": f1,
+        "total": len(results),
+        "correct": sum(r["correct"] for r in results),
+        "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1": f1,
         "tp": tp, "fp": fp, "fn": fn, "tn": tn,
         "avg_time": sum(r["time_ms"] for r in results) / len(results),
         "avg_conf": sum(r["confidence"] for r in results) / len(results),
@@ -150,23 +155,23 @@ def compute_metrics(results):
 
 
 def print_report(results, metrics):
-    print("\n" + "="*72)
+    print("\n" + "=" * 72)
     print("EVALUACION - CONSULTOR DE CONTINUIDAD TRANSFORMERS")
-    print("="*72)
+    print("=" * 72)
     print(f"\n{'ID':<8} {'CATEGORIA':<26} {'ESPERADO':<16} {'OBTENIDO':<16} {'OK?'}")
-    print("-"*72)
+    print("-" * 72)
     for r in results:
-        ok = "OK" if r["correct"] else "FAIL"
+        ok = "✓ OK" if r["correct"] else "✗ FAIL"
         print(f"{r['id']:<8} {r['category']:<26} {r['expected']:<16} {r['obtained']:<16} {ok}")
-    print("-"*72)
+    print("-" * 72)
     print(f"\nAccuracy:  {metrics['accuracy']:.1%}")
     print(f"Precision: {metrics['precision']:.1%}")
     print(f"Recall:    {metrics['recall']:.1%}")
     print(f"F1-Score:  {metrics['f1']:.1%}")
     print(f"\nTP={metrics['tp']}  FP={metrics['fp']}  FN={metrics['fn']}  TN={metrics['tn']}")
-    print(f"Tiempo promedio: {metrics['avg_time']:.0f} ms")
+    print(f"Tiempo promedio:    {metrics['avg_time']:.0f} ms")
     print(f"Confianza promedio: {metrics['avg_conf']:.1%}")
-    print("="*72)
+    print("=" * 72)
 
 
 if __name__ == "__main__":

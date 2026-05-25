@@ -2,7 +2,6 @@ import os
 import json
 import time
 from dataclasses import dataclass
-
 import numpy as np
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -10,7 +9,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from lore_database import get_all_fragments, LoreFragment
-
 
 EMBEDDING_MODEL = "text-embedding-3-small"
 GENERATION_MODEL = "gpt-4o"
@@ -39,10 +37,10 @@ class RetrievalResult:
 
 
 class TransformersVectorStore:
-
-    def __init__(self, client: OpenAI):
-        self.client = client
-        # cliente separado para embeddings
+    # FIX #3: Se eliminó el parámetro `client` que se recibía pero nunca se usaba.
+    # Ahora el vector store crea su propio cliente internamente, igual que antes,
+    # pero sin el parámetro redundante que inducía a confusión.
+    def __init__(self):
         self.embed_client = OpenAI(
             base_url=os.getenv("OPENAI_EMBEDDINGS_URL", os.getenv("OPENAI_BASE_URL")),
             api_key=os.getenv("GITHUB_TOKEN"),
@@ -51,8 +49,9 @@ class TransformersVectorStore:
         self.embeddings = None
         self._faiss_index = None
         self._use_faiss = False
+
         try:
-            import faiss
+            import faiss  # noqa: F401
             self._use_faiss = True
             print("FAISS disponible")
         except ImportError:
@@ -95,8 +94,12 @@ class TransformersVectorStore:
 
         qemb = self._get_embedding(query)
 
+        # FIX #1 + #2: El `else` estaba mal indentado (era el else del `for`,
+        # no del `if self._use_faiss`), lo que hacía que el fallback de NumPy
+        # nunca se ejecutara. Corregido: `else` al nivel del `if self._use_faiss`.
+        # También se agregó `return results` explícito al final de cada rama.
         if self._use_faiss:
-            import faiss
+            import faiss  # noqa: F401
             norm = np.linalg.norm(qemb)
             qnorm = (qemb / norm).reshape(1, -1)
             scores, indices = self._faiss_index.search(qnorm, top_k)
@@ -104,15 +107,23 @@ class TransformersVectorStore:
             for score, idx in zip(scores[0], indices[0]):
                 if idx != -1:
                     frag = self.fragments[idx]
-                    results.append(RetrievalResult(frag.text, float(score), frag.id, frag.category))
+                    results.append(
+                        RetrievalResult(frag.text, float(score), frag.id, frag.category)
+                    )
         else:
-            sims = [self._cosine_sim(qemb, self.embeddings[i]) for i in range(len(self.fragments))]
+            # Fallback NumPy cuando FAISS no está instalado
+            sims = [
+                self._cosine_sim(qemb, self.embeddings[i])
+                for i in range(len(self.fragments))
+            ]
             results = []
             for idx in np.argsort(sims)[::-1][:top_k]:
                 frag = self.fragments[idx]
-                results.append(RetrievalResult(frag.text, sims[idx], frag.id, frag.category))
+                results.append(
+                    RetrievalResult(frag.text, sims[idx], frag.id, frag.category)
+                )
 
-        return results
+        return results  # FIX #2: return explícito fuera de ambas ramas
 
 
 SYSTEM_PROMPT = """Eres el Consultor de Continuidad Narrativa del universo cinematografico
@@ -144,13 +155,13 @@ Responde siempre en JSON puro:
 
 
 class ContinuityConsultant:
-
     def __init__(self):
         self.client = OpenAI(
             base_url=os.getenv("OPENAI_BASE_URL"),
             api_key=os.getenv("GITHUB_TOKEN"),
         )
-        self.vector_store = TransformersVectorStore(self.client)
+        # FIX #3: TransformersVectorStore ya no recibe `client` como parámetro
+        self.vector_store = TransformersVectorStore()
         self._ready = False
 
     def initialize(self):
@@ -204,8 +215,13 @@ class ContinuityConsultant:
                 fragment_analyzed=fragment,
                 verdict="REQUIERE_REVISION",
                 elements_detected=[],
-                inconsistencies=[{"description": raw, "severity": "DESCONOCIDA",
-                                   "guion_says": "", "lore_says": "", "lore_source": ""}],
+                inconsistencies=[{
+                    "description": raw,
+                    "severity": "DESCONOCIDA",
+                    "guion_says": "",
+                    "lore_says": "",
+                    "lore_source": "",
+                }],
                 recommendation="JSON invalido, revisar manualmente",
                 retrieved_lore=[r.text[:120] + "..." for r in retrieved],
                 confidence_score=0.0,
@@ -213,9 +229,9 @@ class ContinuityConsultant:
             )
 
     def print_report(self, report: ContinuityReport):
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print(f"Fragmento: \"{report.fragment_analyzed[:70]}...\"")
-        print(f"Veredicto: {report.verdict}  |  Confianza: {report.confidence_score:.0%}")
+        print(f"Veredicto: {report.verdict} | Confianza: {report.confidence_score:.0%}")
         print(f"Elementos: {', '.join(report.elements_detected) or 'ninguno'}")
         if report.inconsistencies:
             print(f"\nInconsistencias ({len(report.inconsistencies)}):")
@@ -226,7 +242,7 @@ class ContinuityConsultant:
         else:
             print("Sin inconsistencias.")
         print(f"\nRecomendacion: {report.recommendation}")
-        print("="*60)
+        print("=" * 60)
 
 
 if __name__ == "__main__":

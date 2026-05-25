@@ -1,13 +1,17 @@
 import os
 import re
-
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from langchain_openai import ChatOpenAI
 from langchain.agents import AgentExecutor, create_react_agent
-from langchain.tools import tool
-from langchain.prompts import PromptTemplate
+
+# FIX #4: Importaciones actualizadas desde langchain_core (LangChain 0.2+).
+# Las rutas antiguas `langchain.tools` y `langchain.prompts` fueron deprecadas
+# y pueden generar warnings o fallar en versiones recientes del framework.
+from langchain_core.tools import tool
+from langchain_core.prompts import PromptTemplate
 
 from lore_database import get_all_fragments, get_fragments_by_category, LoreFragment
 
@@ -42,7 +46,10 @@ def validate_character(character_name: str) -> str:
     """Verifica el estado canonico de un personaje: apariciones, habilidades, muerte, afiliacion."""
     frags = get_fragments_by_category("PERSONAJE")
     name_lower = character_name.lower()
-    relevant = [f.text for f in frags if name_lower in f.text.lower() or any(name_lower in tag for tag in f.tags)]
+    relevant = [
+        f.text for f in frags
+        if name_lower in f.text.lower() or any(name_lower in tag for tag in f.tags)
+    ]
     if not relevant:
         relevant = _buscar(character_name, get_all_fragments(), top_k=2)
     if not relevant:
@@ -57,7 +64,9 @@ def check_timeline(year_and_event: str) -> str:
     results = _buscar(year_and_event, frags, top_k=4)
     if not results:
         return "No se encontraron eventos canonicos para ese periodo."
-    return f"Timeline canonico para '{year_and_event}':\n\n" + "\n\n".join(f"[{i+1}] {t}" for i, t in enumerate(results))
+    return f"Timeline canonico para '{year_and_event}':\n\n" + "\n\n".join(
+        f"[{i+1}] {t}" for i, t in enumerate(results)
+    )
 
 
 REACT_TEMPLATE = """Eres el Consultor de Continuidad de la saga Transformers (Michael Bay, 2007-2017).
@@ -89,7 +98,6 @@ PROMPT = PromptTemplate.from_template(REACT_TEMPLATE)
 
 
 class ContinuityAgent:
-
     def __init__(self, verbose=True):
         self.llm = ChatOpenAI(
             base_url=os.getenv("OPENAI_BASE_URL"),
@@ -121,7 +129,6 @@ if __name__ == "__main__":
         "Escena 3 - 2007: Bumblebee se dirige a Sam y dice claramente: "
         "'Sam, debes proteger el AllSpark. Confia en mi.'"
     )
-
     agent.run(
         "2009. Sam Witwicky y Cade Yeager trabajan juntos en el cuartel de NEST "
         "para analizar los fragmentos del AllSpark."
