@@ -250,6 +250,27 @@ Demuestra:
 
 ---
 
+## EP3 — Observabilidad
+
+### Generar logs
+```bash
+python run_evaluation_with_logs.py --mock   # sin API
+python run_evaluation_with_logs.py          # con API real
+```
+
+### Ejecutar dashboard
+```bash
+streamlit run dashboard.py
+```
+
+### Archivos nuevos
+| Archivo | Descripción |
+|---------|-------------|
+| `observability.py` | Módulo de métricas y logging |
+| `run_evaluation_with_logs.py` | Ejecuta casos de prueba y genera logs |
+| `dashboard.py` | Dashboard de monitoreo con Streamlit |
+| `logs/` | Registros de ejecución (JSONL) |
+
 ## Conceptos Tecnicos Aplicados
 
 ### RAG (Retrieval-Augmented Generation)
