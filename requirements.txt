@@ -18,3 +18,6 @@ numpy>=1.26.0             # Operaciones vectoriales (también usado como fallbac
 
 # Utilidades
 python-dotenv>=1.0.0      # Carga variables de entorno desde .env
+streamlit>=1.35.0
+plotly>=5.22.0
+scikit-learn>=1.4.0
